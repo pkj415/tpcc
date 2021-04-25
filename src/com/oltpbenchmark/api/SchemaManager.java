@@ -247,8 +247,11 @@ public class SchemaManager {
             execute(t.getCreateDdl());
         }
         // TODO -- can we defer this until after load as well?
-        execute("CREATE INDEX idx_customer_name ON customer ((c_w_id,c_d_id) HASH,c_last,c_first)");
-        execute("CREATE UNIQUE INDEX idx_order ON oorder ((o_w_id,o_d_id) HASH,o_c_id,o_id DESC)");
+        execute("CREATE INDEX idx_customer_name ON customer ((c_w_id,c_d_id) HASH,c_last,c_first)" +
+            " INCLUDE(C_MIDDLE,C_ID,C_STREET_1,C_STREET_2,C_CITY,C_STATE, C_ZIP,C_PHONE,C_CREDIT," +
+            "C_CREDIT_LIM,C_DISCOUNT,C_BALANCE, C_YTD_PAYMENT, C_PAYMENT_CNT, C_SINCE)");
+        execute("CREATE UNIQUE INDEX idx_order ON oorder ((o_w_id,o_d_id) HASH,o_c_id,o_id DESC)" +
+            " INCLUDE (O_CARRIER_ID, O_ENTRY_D)");
 
         if (!db_connection.getAutoCommit()) {
             db_connection.commit();
