@@ -5,9 +5,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.oltpbenchmark.api.InstrumentedSQLStmt;
+import org.apache.log4j.Logger;
 import org.HdrHistogram.Histogram;
 
 public class InstrumentedPreparedStatement {
+    private static final Logger LOG = Logger.getLogger(InstrumentedPreparedStatement.class);
+
     private final PreparedStatement stmt;
     private final Histogram histogram;
 
@@ -31,6 +34,7 @@ public class InstrumentedPreparedStatement {
     }
 
     public ResultSet executeQuery() throws SQLException {
+        LOG.debug("Query: " + stmt);
         if (!trackLatencies) {
             return this.stmt.executeQuery();
         }
@@ -45,6 +49,7 @@ public class InstrumentedPreparedStatement {
     }
 
     public int executeUpdate() throws SQLException {
+        LOG.debug("Query: " + stmt);
         if (!trackLatencies) {
             return this.stmt.executeUpdate();
         }
@@ -59,6 +64,7 @@ public class InstrumentedPreparedStatement {
     }
 
     public void execute() throws SQLException {
+        LOG.debug("Query: " + stmt);
         if (!trackLatencies) {
             this.stmt.execute();
             return;
@@ -74,6 +80,7 @@ public class InstrumentedPreparedStatement {
     }
 
     public void executeBatch() throws SQLException {
+        LOG.debug("Query: " + stmt);
         if (!trackLatencies) {
             this.stmt.executeBatch();
             return;

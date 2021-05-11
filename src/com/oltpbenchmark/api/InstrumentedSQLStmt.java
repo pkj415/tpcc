@@ -35,8 +35,11 @@ public class InstrumentedSQLStmt {
    public static String getOperationLatencyString(Histogram histogram) {
        double avgLatency = histogram.getMean() / 1000;
        double p99Latency = histogram.getValueAtPercentile(99.0) / 1000;
+       double p1Latency = histogram.getValueAtPercentile(1.0) / 1000;
+       double std_dev = histogram.getStdDeviation() / 1000;
  
-       return "Count : " + histogram.getTotalCount() + " Avg Latency: " + avgLatency +
-               " msecs, p99 Latency: " + p99Latency + " msecs";
+       return "Count : " + histogram.getTotalCount() + " P1 latency: " + p1Latency + " Avg Latency: " + avgLatency +
+               " msecs, p99 Latency: " + p99Latency + " msecs, std_dev of latency: " +
+               std_dev + " msecs";
   }
 }

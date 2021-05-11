@@ -110,6 +110,8 @@ public class DBWorkload {
 
     int loaderThreads = options.getLoaderThreads().orElse(min(10, numWarehouses));
 
+    int terminals = options.getNumTerminals().orElse(numWarehouses * 10);
+
     // -------------------------------------------------------------------
     // GET PLUGIN LIST
     // -------------------------------------------------------------------
@@ -148,7 +150,6 @@ public class DBWorkload {
       configOptions.getSslKey().ifPresent(wrkld::setSslKey);
       configOptions.getJdbcUrl().ifPresent(wrkld::setJdbcURL);
 
-      int terminals = numWarehouses * 10;
       wrkld.setTerminals(terminals);
 
       wrkld.setLoaderThreads(loaderThreads);
@@ -532,15 +533,16 @@ public class DBWorkload {
     StringBuilder resultOut = new StringBuilder();
     resultOut.append("\n");
     resultOut.append("================LATENCIES===============\n");
-    resultOut.append(" Operation  | Avg. Latency | P99 Latency | Connection Acq Latency\n");
+    resultOut.append(" Operation  | P1 latency | Avg. Latency | P99 Latency | Std dev | Connection Acq Latency\n");
     for (int i = 0; i < list_latencies.size(); ++i) {
       String op = transactionTypes.get(i + 1);
       List<Integer> latencies = list_latencies.get(i);
       List<Integer> conn_latencies = list_conn_latencies.get(i);
 
       resultOut.append(String.format(
-          "%11s |%13.2f |%12.2f |%23.2f\n",
-          op, getAverageLatency(latencies), getP99Latency(latencies),
+          "%11s |%11.2f |%13.2f |%12.2f |%8.2f |%23.2f\n",
+          op, getP1Latency(latencies), getAverageLatency(latencies), getP99Latency(latencies),
+          getStdDev(latencies),
           getAverageLatency(conn_latencies)));
     }
     LOG.info(resultOut.toString());
@@ -620,6 +622,20 @@ public class DBWorkload {
     return sum * 1.0 / latencies.size() / 1000;
   }
 
+  private static double getStdDev(List<Integer> latencies) {
+    double mean =  getAverageLatency(latencies);
+    if (mean == -1)
+      return -1;
+
+    double geometric_deviation_total = 0.0;
+    for (double latency : latencies) {
+      Double deviation = (latency / 1000) - mean;
+      geometric_deviation_total += (deviation * deviation);
+    }
+    double std_deviation = Math.sqrt(geometric_deviation_total / latencies.size());
+    return std_deviation;
+  }
+
   private static double getP99Latency(List<Integer> latencies) {
     if (latencies.size() == 0) {
       return -1;
@@ -627,6 +643,15 @@ public class DBWorkload {
     Collections.sort(latencies);
     int p99Index = (int)(latencies.size() * 0.99);
     return latencies.get(p99Index) * 1.0 / 1000;
+  }
+
+  private static double getP1Latency(List<Integer> latencies) {
+    if (latencies.size() == 0) {
+      return -1;
+    }
+    Collections.sort(latencies);
+    int p1Index = (int)(latencies.size() * 0.01);
+    return latencies.get(p1Index) * 1.0 / 1000;
   }
 
   public static void mergeResults(String dirPath, String[] fileNames) {
